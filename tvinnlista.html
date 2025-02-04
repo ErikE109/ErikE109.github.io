@@ -28,76 +28,121 @@
       <section class="container">
         <h3>Enter Shipment Details</h3>
         <h4>Headers</h4>
-        <form id="inputFormHeader">
-          <label>Transport: 
-              <input required type="text" class="form-control" id="transportInput" placeholder="Transport">
-               </label>
-               <span class="feedback-icon"></span>
-                 
-            <label>Regnumber: 
-              <input required type="text" class="form-control" id="regnumberInput" placeholder="Regnumber">   
-          </label>
-          <span class="feedback-icon"></span>
-          
-          <button class ="btn btn-primary" onclick="addTvinnHeader(this)">Add header</button>
-      </form>
+
+        <form id="inputFormHeader" class="needs-validation container mt-4" novalidate>
+          <div class="form-group">
+              <label for="consignorInput" class="form-label">Transport:</label>
+              <div class="input-group">
+                  <input required type="text" class="form-control" id="transportInput" placeholder="Transport">
+                  <span class="feedback-icon"></span>
+              </div>
+          </div>
+      
+          <div class="form-group">
+              <label for="consigneeInput" class="form-label">Regnumber:</label>
+              <div class="input-group">
+                  <input required type="text" class="form-control" id="regnumberInput" placeholder="Regnumber">
+                  <span class="feedback-icon"></span>
+              </div>
+          </div>
+          <button type="submit" class ="btn btn-primary" onclick="addTvinnHeader(this)">Add header</button>
+    
+        
+
         
       </form>
         <h4>Body</h4>
-        <form id="inputFormBody" class="needs-validation" novalidate>
 
-          <label>Consignor: 
-              <input required type="text" class="form-control" id="consignorInput" placeholder="Consignor">
-          </label>
-          <span class="feedback-icon"></span>
-
-          <label>Consignee: 
-              <input required type="text"class="form-control"  id="consigneeInput" placeholder="Consignee">
-          </label>
-          <span class="feedback-icon"></span>
-
-          <label>Agent: 
-              <input required type="text" class="form-control" class="form-control" id="agentInput" placeholder="Agent">
-          </label>
-          <span class="feedback-icon"></span>
+        <form id="inputFormBody" class="needs-validation container mt-4" novalidate>
+          <div class="form-group">
+              <label for="consignorInput" class="form-label">Consignor:</label>
+              <div class="input-group">
+                  <input required type="text" class="form-control" id="consignorInput" placeholder="Consignor">
+                  <span class="feedback-icon"></span>
+              </div>
+          </div>
+      
+          <div class="form-group">
+              <label for="consigneeInput" class="form-label">Consignee:</label>
+              <div class="input-group">
+                  <input required type="text" class="form-control" id="consigneeInput" placeholder="Consignee">
+                  <span class="feedback-icon"></span>
+              </div>
+          </div>
+      
+          <div class="form-group">
+              <label for="agentInput" class="form-label">Agent:</label>
+              <div class="input-group">
+                  <input required type="text" class="form-control" id="agentInput" placeholder="Agent">
+                  <span class="feedback-icon"></span>
+              </div>
+          </div>
+      
+          <div class="form-group">
+              <label for="packagesInput" class="form-label">Packages:</label>
+              <div class="input-group">
+                  <input required type="number" class="form-control" id="packagesInput" placeholder="Packages">
+                  <span class="feedback-icon"></span>
+              </div>
+          </div>
+      
+          <div class="form-group">
+              <label for="weightInput" class="form-label">Weight:</label>
+              <div class="input-group">
+                  <input required type="number" class="form-control" id="weightInput" placeholder="Weight">
+                  <span class="feedback-icon"></span>
+              </div>
+          </div>
+      
+          <div class="form-group">
+              <label for="exportMrnInput" class="form-label">MRN:</label>
+              <div class="input-group">
+                  <input type="text" class="form-control" id="exportMrnInput" placeholder="Export MRN">
+                  <span class="feedback-icon"></span>
+              </div>
+          </div>      
           
-          <label>Packages: 
-              <input required type="number" class="form-control" id="packagesInput" placeholder="Packages">
-          </label>
+          <div class="form-group form-check">
+            <input type="radio" class="form-check-input" id="exportCheck" name="exportOrTransitRadio">
+            <label class="form-check-label" for="exportCheck">Export</label>
+        </div>
+        <div class="form-group form-check">
+          <input type="radio" class="form-check-input" id="transitCheck" name="exportOrTransitRadio">
+          <label class="form-check-label" for="transitCheck">Transit</label>         
+      </div>
+
+        <div class="form-group">
+          <label for="declarantnr" class="form-label">Declarant:</label>
+          <div class="input-group">
+              <input type="text" class="form-control" id="declarantInput" placeholder="Declarant">
+              <span class="feedback-icon"></span>
+          </div>
+      </div>
+
+      <div class="form-group">
+        <label for="date" class="form-label">Date:</label>
+        <div class="input-group">
+            <input type="date" class="form-control" id="dateInput" placeholder="Export MRN">
+            <span class="feedback-icon"></span>
+        </div>
+    </div>
+    <div class="form-group">
+      <label for="sekvensnummer" class="form-label">Sekvensnummer:</label>
+      <div class="input-group">
+          <input type="text" class="form-control" id="seqNumberInput" placeholder="Sekvensnummer">
           <span class="feedback-icon"></span>
+      </div>
+  </div>
+  <button type="submit" class ="btn btn-primary" onclick="addTvinnData()">Add</button>
           
-          <label>Weight: 
-              <input required type="number"  class="form-control" id="weightInput" placeholder="Weight">
-          </label>
-          <span class="feedback-icon"></span>
-          
-          <label>Export MRN: 
-              <input type="text"  class="form-control" id="exportMrnInput" placeholder="Export MRN">
-          </label>
-          <span class="feedback-icon"></span>
+</form>
+      
+      
+        
+       
+         
 
-          <label>Transit MRN: 
-              <input type="text"  class="form-control" id="transitMrnInput" placeholder="Transit MRN">
-          </label>
-          <span class="feedback-icon"></span>
-
-          <label>Declarant: 
-              <input required type="text"  class="form-control" id="declarantInput" placeholder="Declarant">
-          </label>
-          <span class="feedback-icon"></span>
-
-          <label>Date: 
-              <input required type="date"  class="form-control" id="dateInput">
-          </label>
-          <span class="feedback-icon"></span>
-          
-          <label>Seq Number: 
-              <input required type="number"  class="form-control" id="seqNumberInput" placeholder="Seq Number">
-          </label>
-          <span class="feedback-icon"></span>
-
-          <button type="submit" class ="btn btn-primary" onclick="addTvinnData()">Add</button>
-      </form>
+ 
 
         
           <div class="headerInfo">
@@ -116,14 +161,13 @@
                 <th>Agent</th>
                 <th>Packages</th>
                 <th>Weight</th>
-                <th>Export MRN</th>
-                <th>Transit MRN</th>
+                <th>MRN</th>
                 <th>Declarant</th>
                 <th>Date</th>
                 <th>Seq Number</th>
             </tr>            
         </table>
-        <button class ="btn btn-primary mt-1" id="generateButton" onclick="createTvinnlist()">Generate PDF</button>
+        <button class ="btn btn-primary mt-1" id="generateButton" onclick="generateTvinnpdf()">Generate PDF</button>
         <button class="btn btn-secondary mt-1"id="dummyDataGenerateor" onclick="addDummyRows()">Lägg till testdata</button>
      
   </section>

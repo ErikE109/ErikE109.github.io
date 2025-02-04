@@ -71,24 +71,22 @@ footer{
 }
 form {
     margin-bottom: 20px;
-    max-width: 300px; /* Optional: Set width for better layout */
+max-width: 500px; 
 }
 
-#inputFormBody input, #inputFormHeader input  
+.input-group
 {
-    width: 100%;
-    padding: 5px;
+    width: 30% !important;
 }
 
-#inputFormBody label, #inputFormHeader label{
-    /* display: block; */
+.form-group
+{
     font-weight: bold;
+    margin-bottom: 10px !important;
+}
 
-}
-#inputFormBody button, #inputFormHeader button{
-    margin-top:10px;
-    display: block;
-}
+
+
 #inputTable button
 {
     margin: 0 5px;

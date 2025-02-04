@@ -260,7 +260,7 @@ function generateBarCode(string) {
   return barcodeDataUrl;
 }
 
-function createTvinnlist() {
+function generateTvinnpdf() {
   //const { jsPDF } = window.jspdf;
   const { jsPDF } = window.jspdf;
   // Step 1: Read data from the DOM
@@ -353,25 +353,19 @@ function createTvinnlist() {
         agent,
         packages,
         weight,
-        exportMRN,
-        transitMRN,
+        mrn,
         declarant,
         date,
         seqNumber,
+        isTransit,
       ] = row;
       // Validation: Ensure only one MRN is filled
-      if (exportMRN && transitMRN) {
-        alert(
-          `Row ${
-            index + 1
-          } has both Export MRN and Transit MRN filled. Please fix the data.`
-        );
-        return;
-      }
 
-      if (transitMRN) transitMrns.push(transitMRN);
+      let isTransitBool = isTransit === "true";
+
+      if (isTransitBool) transitMrns.push(mrn);
+
       agentsSet.add(agent.toUpperCase());
-
       currentContacts = agentsContact.filter((a) =>
         agentsSet.has(a.name.toUpperCase())
       );
@@ -383,8 +377,7 @@ function createTvinnlist() {
         agent,
         packages,
         weight,
-        exportMRN,
-        transitMRN,
+        mrn,
         declarant,
         date,
         seqNumber,
@@ -408,7 +401,7 @@ function createTvinnlist() {
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const startXOutData = 10; // Starting X-axis position
-  const cellWidthBarcodes = (pageWidth - startXOutData * 2) / 3;
+  const cellWidthBarcodes = (pageWidth - startXOutData * 2) / 2;
   let loopCounter = 0;
   if (currentContacts.length > 4) {
     loopCounter++;
@@ -427,30 +420,17 @@ function createTvinnlist() {
     let x = startXOutData; // Reset X for each row
 
     row.forEach((cell, cellIndex) => {
-      if (cellIndex < row.length - 3) {
+      if (cellIndex < row.length - 2) {
         const cellWidth = (pageWidth - startXOutData * 2) / 5; // Distribute cells evenly
         const cellText = doc.splitTextToSize(cell, cellWidth);
         doc.text(cellText, x, y);
         x += cellWidth;
       } else {
         let imageX =
-          startXOutData + cellWidthBarcodes * (cellIndex - (row.length - 3));
-        if (cellIndex === 5 || cellIndex === 6) {
-          imageX = 10;
-        }
+          startXOutData + cellWidthBarcodes * (cellIndex - (row.length - 2));
         const imageY = y + 5; // Adjust barcode position relative to text
-        if (cell !== "") {
-          if (cellIndex !== 6) {
-            doc.addImage(generateBarCode(cell), "PNG", imageX, imageY, 90, 27);
-            doc.line(10, imageY + 26, pageWidth - 10, imageY + 26);
-          } else {
-            doc.setFontSize(18);
-            doc.setFont("times", "bold");
-            doc.text(cell, 30, imageY + 10);
-            doc.setFontSize(12);
-            doc.setFont("times", "normal");
-          }
-        }
+        doc.addImage(generateBarCode(cell), "PNG", imageX, imageY, 90, 27);
+        doc.line(10, imageY + 26, pageWidth - 10, imageY + 26);
       }
     });
     y += 35;
@@ -668,17 +648,16 @@ function addTvinnHeader(ele) {
 
   document.querySelector("#transportOut").textContent = transportId;
   document.querySelector("#regnumberOut").textContent = regnum;
-  ele.innerHTML = "Edit header";
+  ele.textContent = "Edit header";
 
   writeSucessMsg(inputForm);
 }
 
 function toggleValidityCheckSpan(element) {
   let errorSymbol = "✘";
-  let sucessSymbol = "✔";
-  isValid = false;
-  let span = element.parentElement.nextElementSibling;
-
+  let successSymbol = "✔";
+  let isValid = false;
+  let span = element.nextElementSibling;
   if (element.value === "") {
     isValid = false;
     span.classList.remove("success");
@@ -688,7 +667,7 @@ function toggleValidityCheckSpan(element) {
     if (!isValid) isValid = true;
     span.classList.remove("error");
     span.classList.add("success");
-    span.innerHTML = sucessSymbol;
+    span.innerHTML = successSymbol;
   }
 
   return isValid;
@@ -736,36 +715,32 @@ function addTvinnData() {
     document.querySelector("#packagesInput"),
     document.querySelector("#weightInput"),
     document.querySelector("#exportMrnInput"),
-    document.querySelector("#transitMrnInput"),
     document.querySelector("#declarantInput"),
     document.querySelector("#dateInput"),
     document.querySelector("#seqNumberInput"),
+    document.querySelector("#transitCheck"),
   ];
 
-  // if (tvinnDataArray[5].value !== "" && tvinnDataArray[6].value !== "") {
-  //   alert(
-  //     "Both TransitMRN and ExportMRN are filled please remove one and try again"
-  //   );
-  //   return;
-  // }
-
   let rowElement = document.createElement("tr");
+  let isValid = true;
 
-  let isValid = false;
-  let validCheckSpans = false;
-  let validCheckSpan = false;
-
-  for (let i = 0; i < tvinnDataArray.length; i++) {
-    if (i === 5 || i === 6) {
-      let eleArray = [tvinnDataArray[5], tvinnDataArray[6]];
-      validCheckSpans = toggleValidityCheckSpans(eleArray);
-    } else validCheckSpan = toggleValidityCheckSpan(tvinnDataArray[i]);
+  for (let i = 0; i < tvinnDataArray.length - 1; i++) {
+    if (!toggleValidityCheckSpan(tvinnDataArray[i])) isValid = false;
   }
-  debugger;
 
-  if (!validCheckSpans || !validCheckSpan) {
+  if (
+    !document.querySelector("#transitCheck").checked &&
+    !document.querySelector("#exportCheck").checked
+  ) {
     isValid = false;
-  } else isValid = true;
+    document.querySelector("#transitCheck").nextElementSibling.style.color =
+      "red";
+    document.querySelector("#exportCheck").nextElementSibling.style.color =
+      "red";
+  } else {
+    document.querySelector("#transitCheck").nextElementSibling.style.color = "";
+    document.querySelector("#exportCheck").nextElementSibling.style.color = "";
+  }
 
   if (!isValid) {
     alert("Kontrollera att nödvändiga fält är ifyllda");
@@ -773,19 +748,29 @@ function addTvinnData() {
   }
 
   for (let i = 0; i < tvinnDataArray.length; i++) {
+    let isTransit = false;
     let tvinnInputData = tvinnDataArray[i].value;
+    let td = document.createElement("td");
 
-    if (i === 8) {
+    //tvinnDataArray[10] = isTransit;
+
+    if (i === 7) {
       tvinnInputData = tvinnInputData.split("-").reverse().join("");
       //tvinnInputData = tvinnInputData.replaceAll("-", "");
     }
 
-    let td = document.createElement("td");
+    if (i === 9) {
+      isTransit = document.querySelector("#transitCheck").checked;
+      tvinnInputData = isTransit;
+      td.style.display = "none";
+    }
+
     td.textContent = tvinnInputData;
     rowElement.appendChild(td);
   }
-
   if (isValid) {
+    let form = document.querySelector("#inputFormBody");
+    writeSucessMsg(form);
     document.querySelector("#inputTable tbody").appendChild(rowElement);
 
     let removeButtonTd = document.createElement("td");
@@ -821,12 +806,11 @@ function addTvinnData() {
     tvinnDataArray.forEach((element) => {
       element.value = "";
     });
-    let form = document.querySelector("#inputFormBody");
+
     tvinnDataArray.forEach((element) => {
-      element.parentElement.nextElementSibling.classList.remove("error");
-      element.parentElement.nextElementSibling.classList.remove("success");
+      element.nextElementSibling.classList.remove("error");
+      element.nextElementSibling.classList.remove("success");
     });
-    writeSucessMsg(form);
   }
 }
 
