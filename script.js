@@ -408,15 +408,18 @@ function generateTvinnpdf() {
   }
 
   let y = 0;
+  
 
   let headerRow = outputData.shift();
-  headerRow = headerRow.slice(0, -3);
+
+
+  headerRow = headerRow.slice(0, -2);
 
   y = tvinnListHeader(doc, startXOutData, y, pageWidth, transportId, regnum);
   y = tvinnListContacts(doc, startXOutData, y, currentContacts);
   y = tvinnAddColumnHeaders(doc, headerRow, startXOutData, y, pageWidth);
 
-  outputData.forEach((row, rowIndex) => {
+  outputData.forEach((row) => {
     let x = startXOutData; // Reset X for each row
 
     row.forEach((cell, cellIndex) => {
@@ -840,10 +843,10 @@ function addDummyRows() {
       5,
       20,
       "25SE0000IUZM65VOA5",
-      "",
       "971632798",
       "20241201",
       "123456",
+      true
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -851,11 +854,11 @@ function addDummyRows() {
       "Gerlach",
       10,
       50,
-      "",
-      "25SE000050DDHFOVJ4",
+           "25SE000050DDHFOVJ4",
       "971632798",
       "20241202",
       "654321",
+      false
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -864,10 +867,10 @@ function addDummyRows() {
       15,
       30,
       "25SE0000IUZM65VOA5",
-      "",
       "971632798",
       "20241203",
       "234567",
+      true
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -875,11 +878,11 @@ function addDummyRows() {
       "Ecus",
       20,
       40,
-      "",
       "25SE000050DDHFOVJ4",
       "971632798",
       "20241204",
       "765432",
+      false
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -888,10 +891,10 @@ function addDummyRows() {
       25,
       35,
       "25SE0000IUZM65VOA5",
-      "",
       "971632798",
       "20241205",
       "345678",
+      true
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -899,11 +902,11 @@ function addDummyRows() {
       "PostNord",
       30,
       45,
-      "",
-      "25SE000050DDHFOVJ4",
+        "25SE000050DDHFOVJ4",
       "971632798",
       "20241206",
       "876543",
+      false
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -912,10 +915,10 @@ function addDummyRows() {
       35,
       55,
       "25SE0000IUZM65VOA5",
-      "",
       "971632798",
       "20241207",
       "456789",
+      true
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -923,11 +926,11 @@ function addDummyRows() {
       "Agent H",
       40,
       25,
-      "",
       "25SE000050DDHFOVJ4",
       "971632798",
       "20241208",
       "987654",
+      true
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -936,10 +939,10 @@ function addDummyRows() {
       45,
       20,
       "25SE0000IUZM65VOA5",
-      "",
       "971632798",
       "20241209",
       "567890",
+      false
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -947,11 +950,11 @@ function addDummyRows() {
       "Agent J",
       50,
       30,
-      "",
       "25SE000050DDHFOVJ4",
       "971632798",
       "20241210",
       "098765",
+      false
     ],
   ];
 
