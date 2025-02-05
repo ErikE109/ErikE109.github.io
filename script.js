@@ -408,10 +408,8 @@ function generateTvinnpdf() {
   }
 
   let y = 0;
-  
 
   let headerRow = outputData.shift();
-
 
   headerRow = headerRow.slice(0, -2);
 
@@ -844,9 +842,9 @@ function addDummyRows() {
       20,
       "25SE0000IUZM65VOA5",
       "971632798",
-      "20241201",
+      "05022025",
       "123456",
-      true
+      true,
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -854,11 +852,11 @@ function addDummyRows() {
       "Gerlach",
       10,
       50,
-           "25SE000050DDHFOVJ4",
+      "25SE000050DDHFOVJ4",
       "971632798",
-      "20241202",
+      "05022025",
       "654321",
-      false
+      false,
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -868,9 +866,9 @@ function addDummyRows() {
       30,
       "25SE0000IUZM65VOA5",
       "971632798",
-      "20241203",
+      "05022025",
       "234567",
-      true
+      true,
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -880,9 +878,9 @@ function addDummyRows() {
       40,
       "25SE000050DDHFOVJ4",
       "971632798",
-      "20241204",
+      "05022025",
       "765432",
-      false
+      false,
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -892,9 +890,9 @@ function addDummyRows() {
       35,
       "25SE0000IUZM65VOA5",
       "971632798",
-      "20241205",
+      "05022025",
       "345678",
-      true
+      true,
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -902,11 +900,11 @@ function addDummyRows() {
       "PostNord",
       30,
       45,
-        "25SE000050DDHFOVJ4",
+      "25SE000050DDHFOVJ4",
       "971632798",
-      "20241206",
+      "05022025",
       "876543",
-      false
+      false,
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -916,9 +914,9 @@ function addDummyRows() {
       55,
       "25SE0000IUZM65VOA5",
       "971632798",
-      "20241207",
+      "05022025",
       "456789",
-      true
+      true,
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -928,9 +926,9 @@ function addDummyRows() {
       25,
       "25SE000050DDHFOVJ4",
       "971632798",
-      "20241208",
+      "05022025",
       "987654",
-      true
+      true,
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -940,9 +938,9 @@ function addDummyRows() {
       20,
       "25SE0000IUZM65VOA5",
       "971632798",
-      "20241209",
+      "05022025",
       "567890",
-      false
+      false,
     ],
     [
       "STADIUM OUTLET NORGE AB",
@@ -952,9 +950,9 @@ function addDummyRows() {
       30,
       "25SE000050DDHFOVJ4",
       "971632798",
-      "20241210",
+      "05022025",
       "098765",
-      false
+      false,
     ],
   ];
 
