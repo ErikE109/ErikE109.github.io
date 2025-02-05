@@ -194,6 +194,22 @@ function renderCountries(countries) {
                 `
                 : ``
             }
+            ${
+              country.name === "Island"
+                ? `
+                <ul class=list-group>
+                <li class=list-group-item>DROPS TS-external. Consignor: 7717842-NO, Payer: 41007246</li>
+                <li class=list-group-item>Avslut av transit, notera i BNB-arket </li>               
+                <li class=list-group-item>Lägg upp kollin ärendet. Proc: 3171</li>
+                <li class=list-group-item>Transit från BNB</li>
+        
+                
+               
+               
+                </ul> 
+                `
+                : ``
+            }
             
            
 
