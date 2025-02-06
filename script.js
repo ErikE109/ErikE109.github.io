@@ -484,7 +484,6 @@ function generateTvinnpdf() {
   // Step 4: Save the PDF
   let today = new Date();
   today = today.toISOString().split("T")[0].split("-").join("");
-  debugger;
 
   doc.save(
     "Tvinnlista" + "_" + transportId + "_" + regnum + "_" + today + ".pdf"
