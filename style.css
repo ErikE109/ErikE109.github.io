@@ -51,6 +51,9 @@ footer{
     font-size: 1.2em;
     margin-left: 10px;
     visibility: hidden; 
+    position: relative;
+    left: 10px;
+    width: 10px;
   }
   
   .feedback-icon.success {
@@ -62,7 +65,6 @@ footer{
   .feedback-icon.error {
     visibility: visible;
     color: red;
-    margin-left: 10px;
     content: '✘';
   }
 .homePageNav li a{
@@ -72,6 +74,17 @@ footer{
 form {
     margin-bottom: 20px;
 max-width: 500px; 
+}
+
+#transitCheck, #exportCheck
+{
+    border-color: #007593;
+}
+
+#transitCheck:hover, #exportCheck:hover
+{
+    cursor:pointer;
+   
 }
 
 .input-group

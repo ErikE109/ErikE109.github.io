@@ -787,7 +787,7 @@ function addTvinnData() {
   }
   if (isValid) {
     let form = document.querySelector("#inputFormBody");
-    writeSucessMsg(form);
+
     document.querySelector("#inputTable tbody").appendChild(rowElement);
 
     let removeButtonTd = document.createElement("td");
@@ -828,6 +828,9 @@ function addTvinnData() {
       element.nextElementSibling.classList.remove("error");
       element.nextElementSibling.classList.remove("success");
     });
+    writeSucessMsg(form);
+    document.querySelector("#exportCheck").checked = false;
+    document.querySelector("#transitCheck").checked = false;
   }
 }
 

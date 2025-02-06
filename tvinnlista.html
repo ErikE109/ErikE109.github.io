@@ -33,7 +33,7 @@
           <div class="form-group">
               <label for="consignorInput" class="form-label">Transport:</label>
               <div class="input-group">
-                  <input required type="text" class="form-control" id="transportInput" placeholder="Transport">
+                  <input required type="text" class="form-control" id="transportInput" placeholder="Transport" oninput="toggleValidityCheckSpan(this)">
                   <span class="feedback-icon"></span>
               </div>
           </div>
@@ -41,7 +41,7 @@
           <div class="form-group">
               <label for="consigneeInput" class="form-label">Regnumber:</label>
               <div class="input-group">
-                  <input required type="text" class="form-control" id="regnumberInput" placeholder="Regnumber">
+                  <input required type="text" class="form-control" id="regnumberInput" placeholder="Regnumber" oninput="toggleValidityCheckSpan(this)">
                   <span class="feedback-icon"></span>
               </div>
           </div>
@@ -57,7 +57,7 @@
           <div class="form-group">
               <label for="consignorInput" class="form-label">Consignor:</label>
               <div class="input-group">
-                  <input required type="text" class="form-control" id="consignorInput" placeholder="Consignor">
+                  <input required type="text" class="form-control" id="consignorInput" placeholder="Consignor" oninput="toggleValidityCheckSpan(this)">
                   <span class="feedback-icon"></span>
               </div>
           </div>
@@ -65,7 +65,7 @@
           <div class="form-group">
               <label for="consigneeInput" class="form-label">Consignee:</label>
               <div class="input-group">
-                  <input required type="text" class="form-control" id="consigneeInput" placeholder="Consignee">
+                  <input required type="text" class="form-control" id="consigneeInput" placeholder="Consignee"oninput="toggleValidityCheckSpan(this)">
                   <span class="feedback-icon"></span>
               </div>
           </div>
@@ -73,7 +73,7 @@
           <div class="form-group">
               <label for="agentInput" class="form-label">Agent:</label>
               <div class="input-group">
-                  <input required type="text" class="form-control" id="agentInput" placeholder="Agent">
+                  <input required type="text" class="form-control" id="agentInput" placeholder="Agent" oninput="toggleValidityCheckSpan(this)">
                   <span class="feedback-icon"></span>
               </div>
           </div>
@@ -81,56 +81,56 @@
           <div class="form-group">
               <label for="packagesInput" class="form-label">Packages:</label>
               <div class="input-group">
-                  <input required type="number" class="form-control" id="packagesInput" placeholder="Packages">
-                  <span class="feedback-icon"></span>
+                  <input required type="number" class="form-control" id="packagesInput" placeholder="Packages" oninput="toggleValidityCheckSpan(this)">
+                  <span class="feedback-icon">x</span>
               </div>
           </div>
       
           <div class="form-group">
               <label for="weightInput" class="form-label">Weight:</label>
               <div class="input-group">
-                  <input required type="number" class="form-control" id="weightInput" placeholder="Weight">
-                  <span class="feedback-icon"></span>
+                  <input required type="number" class="form-control" id="weightInput" placeholder="Weight" oninput="toggleValidityCheckSpan(this)">
+                  <span class="feedback-icon">x</span>
               </div>
           </div>
       
           <div class="form-group">
               <label for="exportMrnInput" class="form-label">MRN:</label>
               <div class="input-group">
-                  <input type="text" class="form-control" id="exportMrnInput" placeholder="MRN">
-                  <span class="feedback-icon"></span>
+                  <input type="text" class="form-control" id="exportMrnInput" placeholder="MRN" oninput="toggleValidityCheckSpan(this)">
+                  <span class="feedback-icon">x</span>
               </div>
           </div>      
           
           <div class="form-group form-check">
-            <input type="radio" class="form-check-input" id="exportCheck" name="exportOrTransitRadio">
+            <input type="radio" class="form-check-input pe-auto" id="exportCheck" name="exportOrTransitRadio">
             <label class="form-check-label" for="exportCheck">Export</label>
         </div>
         <div class="form-group form-check">
-          <input type="radio" class="form-check-input" id="transitCheck" name="exportOrTransitRadio">
-          <label class="form-check-label" for="transitCheck">Transit</label>         
+          <input type="radio" class="form-check-input pe-auto" id="transitCheck" name="exportOrTransitRadio">
+          <label class="form-check-label" for="transitCheck">Transitering</label>         
       </div>
 
         <div class="form-group">
           <label for="declarantnr" class="form-label">Declarant:</label>
           <div class="input-group">
-              <input type="text" class="form-control" id="declarantInput" placeholder="Declarant">
-              <span class="feedback-icon"></span>
+              <input type="text" class="form-control" id="declarantInput" placeholder="Declarant" oninput="toggleValidityCheckSpan(this)">
+              <span class="feedback-icon">x</span>
           </div>
       </div>
 
       <div class="form-group">
         <label for="date" class="form-label">Date:</label>
         <div class="input-group">
-            <input type="date" class="form-control" id="dateInput" placeholder="Export MRN">
-            <span class="feedback-icon"></span>
+            <input type="date" class="form-control" id="dateInput" placeholder="Export MRN" oninput="toggleValidityCheckSpan(this)">
+            <span class="feedback-icon">x</span>
         </div>
     </div>
     <div class="form-group">
       <label for="sekvensnummer" class="form-label">Sekvensnummer:</label>
       <div class="input-group">
-          <input type="text" class="form-control" id="seqNumberInput" placeholder="Sekvensnummer">
-          <span class="feedback-icon"></span>
+          <input type="text" class="form-control" id="seqNumberInput" placeholder="Sekvensnummer" oninput="toggleValidityCheckSpan(this)">
+          <span class="feedback-icon">x</span>
       </div>
   </div>
   <button type="submit" class ="btn btn-primary" onclick="addTvinnData()">Add</button>
@@ -147,11 +147,15 @@
         
           <div class="headerInfo">
           <h4>Header</h4>
+          <div class="form-group">
           <label for="transport"><strong>Transport:</strong></label>
         <span id="transportOut"></span> <!-- Replace with actual value -->
-        <br>
+       
+      </div>
+      <div class="form-group">
         <label for="regnumber"><strong>Regnumber:</strong></label>
         <span id="regnumberOut"></span> <!-- Replace with actual value -->
+      </div>
         </div>
           <h4>Body</h4>  
           <table id="inputTable" border="1">
