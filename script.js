@@ -482,12 +482,10 @@ function generateTvinnpdf() {
   tvinnListLastPage(doc, pageWidth, transitMrns, transportId, regnum);
 
   // Step 4: Save the PDF
-  let dateToPrint = new Date();
-  let today =
-    "" +
-    dateToPrint.getFullYear() +
-    (dateToPrint.getMonth() + 1) +
-    dateToPrint.getDate();
+  let today = new Date();
+  today = today.toISOString().split("T")[0].split("-").join("");
+  debugger;
+
   doc.save(
     "Tvinnlista" + "_" + transportId + "_" + regnum + "_" + today + ".pdf"
   );
