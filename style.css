@@ -81,10 +81,48 @@ max-width: 500px;
     border-color: #007593;
 }
 
+input[type="file"]::file-selector-button
+{
+    height: 100px;
+    width: 100px;
+  
+}
+
+input[type="file"]
+{
+    padding-left: 0px;
+}
+
 #transitCheck:hover, #exportCheck:hover
 {
     cursor:pointer;
    
+}
+
+#loading {
+    display: none; /* Initially hidden */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    font-size: 18px;
+}
+
+#completed {
+    display: none; /* Initially hidden */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(9, 99, 37, 0.7);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    font-size: 18px;
 }
 
 .input-group

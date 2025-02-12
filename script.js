@@ -129,6 +129,9 @@ function writeWebPageHeader() {
                 <li class="nav-item">
                     <a class="nav-link" href="tvinnlista.html">Skapa Tvinnlista</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="blåkläder.html">Skapa excel Blåkläder</a>
+                </li>
              
             </ul>
         </div>
@@ -1122,4 +1125,140 @@ function tvinnAddColumnHeaders(doc, dataArray, x, y, pageWidth) {
   });
   doc.setFont("times", "normal");
   return (y += 10);
+}
+
+//Blåkläder PDFreader
+async function processPDF() {
+  const loadDiv = document.querySelector("#loading");
+  const completedDiv = document.querySelector("#completed");
+
+  const countryMap = new Map();
+  countryMap.set("LATVIA", "LV");
+  countryMap.set("SRILANKA", "LK");
+  countryMap.set("BANGLADESH", "BD");
+  countryMap.set("MYANMAR", "MM");
+  countryMap.set("ROMANIA", "RO");
+  countryMap.set("SWEDEN", "SE");
+  const file = document.getElementById("pdfInput").files[0];
+  let arrayOfLines = [];
+  if (!file) {
+    alert("Please select a PDF file.");
+    return;
+  }
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+  const fileReader = new FileReader();
+  fileReader.readAsArrayBuffer(file);
+  fileReader.onload = async function () {
+    const pdfData = new Uint8Array(fileReader.result);
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    let extractedText = "";
+    const promises = [];
+    loadDiv.style.display = "block";
+    // Loop through each page of the PDF
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      // THIS IS THE FIX: Immediately invoke the async function inside promises.push
+      promises.push(
+        (async () => {
+          const page = await pdf.getPage(pageNum);
+          const scale = 2; // Higher scale for better OCR accuracy
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          const renderContext = { canvasContext: ctx, viewport };
+          await page.render(renderContext).promise;
+
+          // Convert canvas to image URL
+          const imageUrl = canvas.toDataURL("image/png");
+
+          // Perform OCR using Tesseract.js
+          const {
+            data: { text },
+          } = await Tesseract.recognize(imageUrl, "eng", {
+            logger: (m) => console.log(m),
+          });
+
+          // Extract lines starting with "Total" from OCR text
+          const lines = text
+            .split("\n")
+            .filter((line) => line.startsWith("Total"));
+
+          // Add these lines to the array
+          arrayOfLines.push(...lines);
+        })() // FIX: Immediately invoke the async function
+      );
+    }
+
+    // Wait for all promises to resolve (i.e., all pages processed)
+    await Promise.all(promises);
+
+    // Pass the extracted lines to createExcel function
+    let arrayOfObjects = arrayOfLines.map((line, index) => {
+      const newLine = line.trim().split(/\s+/);
+
+      if (newLine.length > 7) {
+        newLine[3] = newLine[3] + newLine[4];
+        newLine.splice(4, 1);
+      }
+      let newObject = {
+        tariff: newLine[1],
+        coo: countryMap.get(newLine[3].toUpperCase()) || newLine[3],
+        quantity: parseFloat(newLine[5]),
+        weight: parseFloat(newLine[4]),
+        value: parseFloat(newLine[6]),
+      };
+
+      //let weightComparer = newObject.quantity / newObject.weight;
+      if (newObject.quantity / newObject.weight < 0.09) {
+        newObject.weight /= 100;
+      }
+
+      return newObject;
+    });
+
+    //Sammanslår data, som pivot
+    let joinedData = arrayOfObjects.reduce((acc, obj) => {
+      const key = obj.tariff + "_" + obj.coo;
+
+      if (!acc[key]) acc[key] = { ...obj };
+      else {
+        acc[key].quantity += obj.quantity;
+        acc[key].weight += obj.weight;
+        acc[key].value += obj.value;
+      }
+      return acc;
+    }, {});
+
+    arrayOfObjects = Object.values(joinedData);
+    await createExcel(arrayOfObjects);
+    loadDiv.style.display = "none";
+    completedDiv.style.display = "block";
+    setTimeout(() => {
+      completedDiv.style.display = "none";
+    }, 3000);
+  };
+}
+
+//Blåkläder excelskapare
+async function createExcel(arrayOfObjects) {
+  //let filInput = document.getElementById("fieldFilnamn").value;
+  //console.log(filInput);
+
+  // if (filInput === "") {
+  //   filInput = "Blåkläder";
+  // }
+
+  const worksheet = XLSX.utils.json_to_sheet(arrayOfObjects);
+
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Default");
+
+  XLSX.writeFile(workbook, "Blåkläder" + ".xlsx", { compression: true });
 }
