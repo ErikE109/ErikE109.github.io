@@ -44,13 +44,17 @@
             <button class="btn btn-primary" onclick="processPDF()">
               Hämta Excel
             </button>
-            <div id="loading">
+            <div id="loading" class="alert alert-primary">
               <div class="text-center">Vänta...</div>
-              <div>Läser data & skapar excel</div>
+              <div>Läser pdf & skapar excel</div>
+              <div id="progressShower" class="text-center"></div>
             </div>
-            <div id="completed">
+            <div id="completed" class="alert alert-success">
               <div class="text-center">Klar!</div>
               <div>Excel skapad, kolla i hämtade filer</div>
+            </div>
+            <div id="failure" class="alert alert-danger">
+              <div>Något gick fel</div>
             </div>
           </div>
         </div>

@@ -105,11 +105,10 @@ input[type="file"]
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
     padding: 15px 20px;
     border-radius: 5px;
     font-size: 18px;
+    font-weight: bold;
 }
 
 #completed {
@@ -118,8 +117,19 @@ input[type="file"]
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(9, 99, 37, 0.7);
-    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#failure {
+    display: none; /* Initially hidden */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    font-weight: bold;
+    transform: translate(-50%, -50%);
     padding: 15px 20px;
     border-radius: 5px;
     font-size: 18px;

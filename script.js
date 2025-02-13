@@ -201,7 +201,7 @@ function renderCountries(countries) {
               country.name === "Island"
                 ? `
                 <ul class=list-group>
-                <li class=list-group-item>DROPS TS-external. Consignor: 7717842-NO, Payer: 41007246</li>
+                <li class=list-group-item>DROPS TS-external. Consignor: 7717842-NO, Payer: 9991</li>
                 <li class=list-group-item>Avslut av transit, notera i BNB-arket </li>               
                 <li class=list-group-item>Lägg upp kollin ärendet. Proc: 3171</li>
                 <li class=list-group-item>Transit från BNB</li>
@@ -828,18 +828,18 @@ function addTvinnData() {
       element.nextElementSibling.classList.remove("error");
       element.nextElementSibling.classList.remove("success");
     });
-    writeSucessMsg(form);
+    writeSucessMsg(form, "Data successfully added!");
     document.querySelector("#exportCheck").checked = false;
     document.querySelector("#transitCheck").checked = false;
   }
 }
 
-function writeSucessMsg(outElement) {
+function writeSucessMsg(outElement, phrase) {
   let p = document.createElement("p");
   p.classList = "alert alert-success";
   p.role = "alert";
   p.style.marginTop = "5px";
-  p.innerHTML = "Data successfully added!";
+  p.innerHTML = phrase;
   outElement.append(p);
   setTimeout(() => {
     p.remove();
@@ -1127,105 +1127,153 @@ function tvinnAddColumnHeaders(doc, dataArray, x, y, pageWidth) {
   return (y += 10);
 }
 
-//Blåkläder PDFreader
+// //Blåkläder excelskapare
+async function createExcel(arrayOfObjects, fileName) {
+  const worksheet = XLSX.utils.json_to_sheet(arrayOfObjects);
+
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Default");
+
+  XLSX.writeFile(workbook, fileName + ".xlsx", { compression: true });
+}
+
 async function processPDF() {
   const loadDiv = document.querySelector("#loading");
   const completedDiv = document.querySelector("#completed");
+  const failureDiv = document.querySelector("#failure");
 
-  const countryMap = new Map();
-  countryMap.set("LATVIA", "LV");
-  countryMap.set("SRILANKA", "LK");
-  countryMap.set("BANGLADESH", "BD");
-  countryMap.set("MYANMAR", "MM");
-  countryMap.set("ROMANIA", "RO");
-  countryMap.set("SWEDEN", "SE");
   const file = document.getElementById("pdfInput").files[0];
-  let arrayOfLines = [];
   if (!file) {
     alert("Please select a PDF file.");
     return;
   }
 
+  try {
+    loadDiv.style.display = "block";
+    const pdfData = await readPDFFile(file);
+    const extractedLines = await extractTextFromPDF(pdfData);
+    const parsedData = parseLinesToObjects(extractedLines);
+    const mergedData = mergeData(parsedData);
+
+    await createExcel(mergedData, "Blåkläder");
+
+    loadDiv.style.display = "none";
+    completedDiv.style.display = "block";
+    setTimeout(() => (completedDiv.style.display = "none"), 3000);
+  } catch (error) {
+    console.error("Error processing PDF:", error);
+    alert("An error occurred while processing the PDF.");
+    failureDiv.style.display = "block";
+    setTimeout(() => (failureDiv.style.display = "none"), 3000);
+  }
+}
+
+async function readPDFFile(file) {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
-  const fileReader = new FileReader();
-  fileReader.readAsArrayBuffer(file);
-  fileReader.onload = async function () {
-    const pdfData = new Uint8Array(fileReader.result);
-    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-    let extractedText = "";
-    const promises = [];
-    loadDiv.style.display = "block";
-    // Loop through each page of the PDF
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      // THIS IS THE FIX: Immediately invoke the async function inside promises.push
-      promises.push(
-        (async () => {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader();
+    fileReader.onload = () => resolve(new Uint8Array(fileReader.result));
+    fileReader.onerror = reject;
+    fileReader.readAsArrayBuffer(file);
+  });
+}
+
+async function extractTextFromPDF(pdfData) {
+  const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+  let arrayOfLines = [];
+  const promises = [];
+  let loopCounter = 1;
+
+  let progressShower = document.querySelector("#progressShower");
+  progressShower.textContent = "Initializing...";
+
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    promises.push(
+      (async () => {
+        try {
           const page = await pdf.getPage(pageNum);
-          const scale = 2; // Higher scale for better OCR accuracy
-          const viewport = page.getViewport({ scale });
-
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-
-          const renderContext = { canvasContext: ctx, viewport };
-          await page.render(renderContext).promise;
-
-          // Convert canvas to image URL
-          const imageUrl = canvas.toDataURL("image/png");
-
-          // Perform OCR using Tesseract.js
-          const {
-            data: { text },
-          } = await Tesseract.recognize(imageUrl, "eng", {
-            logger: (m) => console.log(m),
-          });
-
-          // Extract lines starting with "Total" from OCR text
-          const lines = text
-            .split("\n")
-            .filter((line) => line.startsWith("Total"));
-
-          // Add these lines to the array
+          const text = await performOCR(page, pageNum, pdf.numPages);
+          const lines = extractLines(text, "Total");
           arrayOfLines.push(...lines);
-        })() // FIX: Immediately invoke the async function
-      );
+          updateProgress(pdf.numPages, loopCounter);
+          loopCounter++;
+        } catch (error) {
+          console.error(error);
+        }
+      })()
+    );
+  }
+
+  await Promise.all(promises);
+  return arrayOfLines;
+}
+
+function updateProgress(totalPages, currentPage) {
+  let progressShower = document.querySelector("#progressShower");
+  let progressPercentage = currentPage / totalPages;
+  progressShower.textContent = Math.round(progressPercentage * 100) + "%";
+}
+
+async function performOCR(page) {
+  const scale = 4;
+  const viewport = page.getViewport({ scale });
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  const renderContext = { canvasContext: ctx, viewport };
+  await page.render(renderContext).promise;
+
+  const imageUrl = canvas.toDataURL("image/png");
+
+  const {
+    data: { text },
+  } = await Tesseract.recognize(imageUrl, "eng");
+
+  return text;
+}
+
+function extractLines(text, searchPhrase) {
+  return text
+    .split("\n")
+    .filter((line) => line.startsWith(searchPhrase))
+    .map((line) => line.trim());
+}
+
+function parseLinesToObjects(arrayOfLines) {
+  return arrayOfLines.map((line) => {
+    const newLine = line.split(/\s+/);
+
+    if (newLine.length > 7) {
+      newLine[3] = newLine[3] + newLine[4];
+      newLine.splice(4, 1);
     }
 
-    // Wait for all promises to resolve (i.e., all pages processed)
-    await Promise.all(promises);
+    let obj = {
+      tariff: newLine[1],
+      coo: getCountryCode(newLine[3]),
+      quantity: parseFloat(newLine[5]),
+      weight: parseFloat(newLine[4]),
+      value: parseFloat(newLine[6]),
+    };
 
-    // Pass the extracted lines to createExcel function
-    let arrayOfObjects = arrayOfLines.map((line, index) => {
-      const newLine = line.trim().split(/\s+/);
+    if (obj.quantity / obj.weight < 0.09) {
+      obj.weight /= 100;
+    }
 
-      if (newLine.length > 7) {
-        newLine[3] = newLine[3] + newLine[4];
-        newLine.splice(4, 1);
-      }
-      let newObject = {
-        tariff: newLine[1],
-        coo: countryMap.get(newLine[3].toUpperCase()) || newLine[3],
-        quantity: parseFloat(newLine[5]),
-        weight: parseFloat(newLine[4]),
-        value: parseFloat(newLine[6]),
-      };
+    return obj;
+  });
+}
 
-      //let weightComparer = newObject.quantity / newObject.weight;
-      if (newObject.quantity / newObject.weight < 0.09) {
-        newObject.weight /= 100;
-      }
-
-      return newObject;
-    });
-
-    //Sammanslår data, som pivot
-    let joinedData = arrayOfObjects.reduce((acc, obj) => {
+function mergeData(arrayOfObjects) {
+  return Object.values(
+    arrayOfObjects.reduce((acc, obj) => {
       const key = obj.tariff + "_" + obj.coo;
-
       if (!acc[key]) acc[key] = { ...obj };
       else {
         acc[key].quantity += obj.quantity;
@@ -1233,32 +1281,19 @@ async function processPDF() {
         acc[key].value += obj.value;
       }
       return acc;
-    }, {});
-
-    arrayOfObjects = Object.values(joinedData);
-    await createExcel(arrayOfObjects);
-    loadDiv.style.display = "none";
-    completedDiv.style.display = "block";
-    setTimeout(() => {
-      completedDiv.style.display = "none";
-    }, 3000);
-  };
+    }, {})
+  );
 }
 
-//Blåkläder excelskapare
-async function createExcel(arrayOfObjects) {
-  //let filInput = document.getElementById("fieldFilnamn").value;
-  //console.log(filInput);
+function getCountryCode(country) {
+  const countryMap = new Map([
+    ["LATVIA", "LV"],
+    ["SRILANKA", "LK"],
+    ["BANGLADESH", "BD"],
+    ["MYANMAR", "MM"],
+    ["ROMANIA", "RO"],
+    ["SWEDEN", "SE"],
+  ]);
 
-  // if (filInput === "") {
-  //   filInput = "Blåkläder";
-  // }
-
-  const worksheet = XLSX.utils.json_to_sheet(arrayOfObjects);
-
-  const workbook = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Default");
-
-  XLSX.writeFile(workbook, "Blåkläder" + ".xlsx", { compression: true });
+  return countryMap.get(country.toUpperCase()) || country;
 }
