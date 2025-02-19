@@ -1197,6 +1197,7 @@ async function extractTextFromPDF(pdfData) {
           const page = await pdf.getPage(pageNum);
           const text = await performOCR(page, pageNum, pdf.numPages);
           const lines = extractLines(text, "Total");
+
           arrayOfLines.push(...lines);
           updateProgress(pdf.numPages, loopCounter);
           loopCounter++;
@@ -1247,7 +1248,7 @@ function extractLines(text, searchPhrase) {
 
 function parseLinesToObjects(arrayOfLines) {
   return arrayOfLines.map((line) => {
-    const newLine = line.split(/\s+/);
+    const newLine = line.replace(",", "").split(/\s+/);
 
     if (newLine.length > 7) {
       newLine[3] = newLine[3] + newLine[4];
@@ -1261,6 +1262,7 @@ function parseLinesToObjects(arrayOfLines) {
       weight: parseFloat(newLine[4]),
       value: parseFloat(newLine[6]),
     };
+    debugger;
 
     if (obj.quantity / obj.weight < 0.09) {
       obj.weight /= 100;
