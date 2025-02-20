@@ -1240,42 +1240,93 @@ async function performOCR(page) {
 }
 
 function extractLines(text, searchPhrase) {
-  return text
-    .split("\n")
-    .filter((line) => line.startsWith(searchPhrase))
-    .map((line) => line.trim());
+  //return text.split("\n").indexOf(searchPhrase);
+  //.filter((line) => line.startsWith(searchPhrase))
+  //.map((line) => line.trim());
+  const lines = text.split("\n");
+  const result = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith(searchPhrase)) {
+      if (i > 0) {
+        result.push(lines[i - 1].trim()); // Add the line before the match
+      }
+      result.push(lines[i].trim()); // Add the matching line
+    }
+  }
+
+  return result;
 }
 
 function parseLinesToObjects(arrayOfLines) {
-  return arrayOfLines.map((line) => {
+  const objects = [];
+  let description;
+
+  for (let i = 0; i < arrayOfLines.length; i++) {
+    const line = arrayOfLines[i];
     const newLine = line.replace(",", "").split(/\s+/);
 
-    if (newLine.length > 7) {
-      newLine[3] = newLine[3] + newLine[4];
-      newLine.splice(4, 1);
+    if (i % 2 === 0) {
+      if (newLine.length === 7) {
+        description = newLine[1] + " " + newLine[2];
+      } else if (newLine.length === 8) {
+        description = newLine[1] + " " + newLine[2] + " " + newLine[3];
+      } else if (newLine.length === 9) {
+        description =
+          newLine[1] + " " + newLine[2] + " " + newLine[3] + " " + newLine[4];
+      } else if (newLine.length === 10) {
+        description =
+          newLine[1] +
+          " " +
+          newLine[2] +
+          " " +
+          newLine[3] +
+          " " +
+          newLine[4] +
+          " " +
+          newLine[5];
+      } else
+        description =
+          newLine[1] +
+          " " +
+          newLine[2] +
+          " " +
+          newLine[3] +
+          " " +
+          newLine[4] +
+          " " +
+          newLine[5] +
+          " " +
+          newLine[6];
+    } else {
+      if (newLine.length > 7) {
+        newLine[3] = newLine[3] + newLine[4];
+        newLine.splice(4, 1);
+      }
+
+      let obj = {
+        description: description,
+        tariff: newLine[1],
+        coo: getCountryCode(newLine[3]),
+        quantity: parseFloat(newLine[5]),
+        weight: parseFloat(newLine[4]),
+        value: parseFloat(newLine[6]),
+      };
+
+      if (obj.quantity / obj.weight < 0.09) {
+        obj.weight /= 100;
+      }
+      objects.push(obj);
     }
+  }
 
-    let obj = {
-      tariff: newLine[1],
-      coo: getCountryCode(newLine[3]),
-      quantity: parseFloat(newLine[5]),
-      weight: parseFloat(newLine[4]),
-      value: parseFloat(newLine[6]),
-    };
-    debugger;
-
-    if (obj.quantity / obj.weight < 0.09) {
-      obj.weight /= 100;
-    }
-
-    return obj;
-  });
+  return objects;
 }
 
 function mergeData(arrayOfObjects) {
   return Object.values(
     arrayOfObjects.reduce((acc, obj) => {
-      const key = obj.tariff + "_" + obj.coo;
+      const key = obj.tariff + "_" + obj.coo + "_" + obj.description;
       if (!acc[key]) acc[key] = { ...obj };
       else {
         acc[key].quantity += obj.quantity;
