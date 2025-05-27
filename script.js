@@ -25,6 +25,7 @@ const myPack = products.find((ele) => ele.name == "MyPack");
 const parcel = products.find((ele) => ele.name == "Parcel");
 const palett = products.find((ele) => ele.name == "Palett");
 const split = products.find((ele) => ele.name == "Split Shipment");
+
 const countryData = [
   {
     name: "Schweiz",
@@ -90,8 +91,15 @@ const pnCharges = [
   pnCharge("Övriga spedavgifter", 2001605, 490, "export"),
   pnCharge("Förtullningsavgift, DAP Cleared Parcel", 2001598, 210, "export"),
   pnCharge("Förtullningsavgift, DAP Parcel", 2001600, 95, "export"),
+  pnCharge("Förtullningsavgift, Split Shipment", 2008831, 295, "export"),
+  pnCharge("Klarering vid gräns", 2007550, 325, "export"),
+  pnCharge("Tullfaktura Saknad EDI", 2001607, 250, "export"),
+  pnCharge("Tullfaktura Saknad EDI", 2001607, 250, "import"),
 ];
+
+pnCharges.sort((a, b) => a.name.localeCompare(b.name));
 const importFees = pnCharges.filter((charge) => charge.type == "import");
+
 const exportFees = pnCharges.filter((charge) => charge.type == "export");
 
 //Call default functions
@@ -1127,9 +1135,73 @@ function tvinnAddColumnHeaders(doc, dataArray, x, y, pageWidth) {
   return (y += 10);
 }
 
+function formatDataForExceJSON(data) {
+  let formattedData = [];
+
+  data.forEach((obj) => {
+    // Seller block (Vertical)
+    formattedData.push(["Seller"]);
+    formattedData.push(...objectToRowsJSON(obj.customsInvoice.seller));
+
+    // Buyer block (Vertical)
+    formattedData.push(["Buyer"]);
+    formattedData.push(...objectToRowsJSON(obj.customsInvoice.buyer));
+
+    // Invoice block (Vertical)
+    formattedData.push(["Invoice"]);
+    formattedData.push(...objectToRowsJSON(obj.customsInvoice.invoice));
+
+    formattedData.push([
+      "Number of packages",
+      obj.customsInvoice.totalNumberOfPackages.value,
+    ]);
+
+    formattedData.push([
+      "Gross weight",
+      obj.customsInvoice.totalGrossWeight.value,
+    ]);
+
+    //formattedData.push(["Net weight", obj.customsInvoice.totalNetWeight.value]);
+
+    formattedData.push(["Total value", obj.customsInvoice.invoiceTotal.amount]);
+
+    // Detailed Description block (Horizontal)
+    formattedData.push(["Detailed Description"]);
+    console.log(formattedData);
+
+    // Add headers (only once)
+    if (obj.detailedDescription.length > 0) {
+      formattedData.push(Object.keys(obj.detailedDescription[0])); // Column Headers
+    }
+
+    // Add each item in horizontal format
+    obj.detailedDescription.forEach((item) => {
+      formattedData.push(Object.values(item));
+    });
+
+    // Separator row (optional)
+    formattedData.push([" "]);
+  });
+
+  return formattedData;
+}
+
+function objectToRowsJSON(obj) {
+  return Object.entries(obj).map(([key, value]) => {
+    if (typeof value === "object" && value !== null) {
+      value = JSON.stringify(value); // Convert objects/arrays to strings
+    }
+    return [key, value]; // Each property is a row
+  });
+}
+
 // //Blåkläder excelskapare
 async function createExcel(arrayOfObjects, fileName) {
-  const worksheet = XLSX.utils.json_to_sheet(arrayOfObjects);
+  formattedData = formatDataForExceJSON(arrayOfObjects);
+
+  //const worksheet = XLSX.utils.json_to_sheet(arrayOfObjects);
+
+  const worksheet = XLSX.utils.aoa_to_sheet(formattedData);
 
   const workbook = XLSX.utils.book_new();
 
@@ -1152,11 +1224,31 @@ async function processPDF() {
   try {
     loadDiv.style.display = "block";
     const pdfData = await readPDFFile(file);
+
     const extractedLines = await extractTextFromPDF(pdfData);
+
     const parsedData = parseLinesToObjects(extractedLines);
+
     const mergedData = mergeData(parsedData);
 
-    await createExcel(mergedData, "Blåkläder");
+    let totalweight = mergedData.reduce((acc, obj) => acc + obj.netWeight, 0);
+    let totalvalue = mergedData.reduce((acc, obj) => acc + obj.itemValue, 0);
+    let kollinr = "1233457890SE";
+
+    // = document.querySelector("#pdfText").value;
+
+    const apiObject = apidataArrayOfObjects[0];
+    apiObject.ids[0].id = kollinr;
+    apiObject.detailedDescription = mergedData;
+    apiObject.customsInvoice.totalGrossWeight.value = totalweight;
+    apiObject.customsInvoice.invoiceTotal.amount = totalvalue;
+    apiObject.customsInvoice.invoice.shippingDate = bkDate;
+    apiObject.customsInvoice.invoice.invoiceNo = dispactNoBK;
+
+    console.log("OBJECT:", apiObject);
+    console.log("ARRAYOFOBJECTS:", apidataArrayOfObjects);
+
+    await createExcel(apidataArrayOfObjects, "Blåkläder");
 
     loadDiv.style.display = "none";
     completedDiv.style.display = "block";
@@ -1181,45 +1273,66 @@ async function readPDFFile(file) {
   });
 }
 
+let dispactNoBK = null;
+let bkDate = null;
+
 async function extractTextFromPDF(pdfData) {
   const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
   let arrayOfLines = [];
   const promises = [];
   let loopCounter = 1;
+  const worker = await Tesseract.createWorker({
+    logger: (m) => console.info(m),
+  });
+
+  await worker.loadLanguage("eng");
+  await worker.initialize("eng");
 
   let progressShower = document.querySelector("#progressShower");
   progressShower.textContent = "Initializing...";
 
+  // for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+  //   promises.push(
+  //     (async () => {
+  //       try {
+  //         const page = await pdf.getPage(pageNum);
+  //         const text = await performOCR(page, worker);
+  //         const lines = extractLines(text, "Total");
+
+  //         arrayOfLines.push(...lines);
+  //         updateProgress(pdf.numPages, loopCounter);
+  //         loopCounter++;
+  //       } catch (error) {
+  //         console.error(error);
+  //       }
+  //     })()
+  //   );
+  // }
+
+  // await Promise.all(promises);
+
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    promises.push(
-      (async () => {
-        try {
-          const page = await pdf.getPage(pageNum);
-          const text = await performOCR(page, pageNum, pdf.numPages);
-          const lines = extractLines(text, "Total");
+    try {
+      const page = await pdf.getPage(pageNum);
+      const text = await performOCR(page, worker);
+      const lines = extractLines(text, "Total");
 
-          arrayOfLines.push(...lines);
-          updateProgress(pdf.numPages, loopCounter);
-          loopCounter++;
-        } catch (error) {
-          console.error(error);
-        }
-      })()
-    );
+      if (!bkDate) bkDate = extractBKdate(text);
+      if (!dispactNoBK) dispactNoBK = extractBKdispact(text);
+
+      arrayOfLines.push(...lines);
+      updateProgress(pdf.numPages, pageNum);
+    } catch (error) {
+      console.error("Error on page " + pageNum, error);
+    }
   }
+  await worker.terminate();
 
-  await Promise.all(promises);
   return arrayOfLines;
 }
 
-function updateProgress(totalPages, currentPage) {
-  let progressShower = document.querySelector("#progressShower");
-  let progressPercentage = currentPage / totalPages;
-  progressShower.textContent = Math.round(progressPercentage * 100) + "%";
-}
-
-async function performOCR(page) {
-  const scale = 4;
+async function performOCR(page, worker) {
+  const scale = 3;
   const viewport = page.getViewport({ scale });
 
   const canvas = document.createElement("canvas");
@@ -1231,12 +1344,56 @@ async function performOCR(page) {
   await page.render(renderContext).promise;
 
   const imageUrl = canvas.toDataURL("image/png");
+  const blob = await new Promise((resolve) =>
+    canvas.toBlob(resolve, "image/png")
+  );
+
+  // const {
+  //   data: { text },
+  // } = await Tesseract.recognize(imageUrl, "eng", {
+  //   logger: (m) => console.log(m),
+  // });
+  // console.info("OCR result:", "sucess " + pageNum + " of " + totalPages);
 
   const {
     data: { text },
-  } = await Tesseract.recognize(imageUrl, "eng");
+  } = await worker.recognize(blob);
 
   return text;
+}
+
+function updateProgress(totalPages, currentPage) {
+  let progressShower = document.querySelector("#progressShower");
+  let progressPercentage = currentPage / totalPages;
+  progressShower.textContent = Math.round(progressPercentage * 100) + "%";
+}
+
+function extractBKdispact(text) {
+  const lines = text.split("\n");
+  let dispactNo = null;
+  if (!dispactNo) {
+    lines.forEach((stringLine) => {
+      if (stringLine.includes("Dispatch")) {
+        let index = stringLine.indexOf("Dispatch");
+        dispactNo = stringLine.substring(index + 8, index + 16).trim();
+      }
+    });
+  }
+  return dispactNo;
+}
+
+function extractBKdate(text) {
+  const lines = text.split("\n");
+  let fulldate = null;
+  if (!fulldate) {
+    lines.forEach((stringLine) => {
+      if (stringLine.includes("Date:")) {
+        let index = stringLine.indexOf("Date:");
+        fulldate = stringLine.substring(index + 5, index + 16).trim();
+      }
+    });
+  }
+  return fulldate;
 }
 
 function extractLines(text, searchPhrase) {
@@ -1260,7 +1417,7 @@ function extractLines(text, searchPhrase) {
 
 function parseLinesToObjects(arrayOfLines) {
   const objects = [];
-  let description;
+  let content;
 
   for (let i = 0; i < arrayOfLines.length; i++) {
     const line = arrayOfLines[i];
@@ -1268,14 +1425,14 @@ function parseLinesToObjects(arrayOfLines) {
 
     if (i % 2 === 0) {
       if (newLine.length === 7) {
-        description = newLine[1] + " " + newLine[2];
+        content = newLine[1] + " " + newLine[2];
       } else if (newLine.length === 8) {
-        description = newLine[1] + " " + newLine[2] + " " + newLine[3];
+        content = newLine[1] + " " + newLine[2] + " " + newLine[3];
       } else if (newLine.length === 9) {
-        description =
+        content =
           newLine[1] + " " + newLine[2] + " " + newLine[3] + " " + newLine[4];
       } else if (newLine.length === 10) {
-        description =
+        content =
           newLine[1] +
           " " +
           newLine[2] +
@@ -1286,7 +1443,7 @@ function parseLinesToObjects(arrayOfLines) {
           " " +
           newLine[5];
       } else
-        description =
+        content =
           newLine[1] +
           " " +
           newLine[2] +
@@ -1305,12 +1462,12 @@ function parseLinesToObjects(arrayOfLines) {
       }
 
       let obj = {
-        description: description,
-        tariff: newLine[1],
-        coo: getCountryCode(newLine[3]),
+        content: content,
+        hsTariffNumber: newLine[1],
+        countryOfOrigin: getCountryCode(newLine[3]),
         quantity: parseFloat(newLine[5]),
-        weight: parseFloat(newLine[4]),
-        value: parseFloat(newLine[6]),
+        netWeight: parseFloat(newLine[4]),
+        itemValue: parseFloat(newLine[6]),
       };
 
       if (obj.quantity / obj.weight < 0.09) {
@@ -1323,15 +1480,16 @@ function parseLinesToObjects(arrayOfLines) {
   return objects;
 }
 
-function mergeData(arrayOfObjects) {
+function mergeData(arrayOfcommodityItems) {
   return Object.values(
-    arrayOfObjects.reduce((acc, obj) => {
-      const key = obj.tariff + "_" + obj.coo + "_" + obj.description;
-      if (!acc[key]) acc[key] = { ...obj };
+    arrayOfcommodityItems.reduce((acc, commodityItem) => {
+      const key =
+        commodityItem.hsTariffNumber + "_" + commodityItem.countryOfOrigin;
+      if (!acc[key]) acc[key] = { ...commodityItem };
       else {
-        acc[key].quantity += obj.quantity;
-        acc[key].weight += obj.weight;
-        acc[key].value += obj.value;
+        acc[key].quantity += commodityItem.quantity;
+        acc[key].netWeight += commodityItem.netWeight;
+        acc[key].itemValue += commodityItem.itemValue;
       }
       return acc;
     }, {})
@@ -1350,3 +1508,117 @@ function getCountryCode(country) {
 
   return countryMap.get(country.toUpperCase()) || country;
 }
+
+const APIurl = "api2.postnord.com/rest/shipment";
+
+const apidataArrayOfObjects = [
+  {
+    ids: [
+      {
+        id: "23784726535SE",
+        idType: "ITEMID",
+      },
+    ],
+    customsInvoice: {
+      declarationType: "invoiceExportDeclaration",
+      type: "commercial",
+      basicServiceCode: "52",
+      seller: {
+        partyIdentification: {
+          partyId: "20072020",
+          partyIdType: "160",
+        },
+        vatNo: "5560696618",
+        name: "AB BLÅKLÄDER",
+        streets: ["POSTBOX 124"],
+        city: "SVENLJUNGA",
+        postalCode: "51223",
+        countryCode: "SE",
+        contacts: {
+          name: "JOSEFIN ANDERSSON",
+          phoneNo: "+0325661900",
+          emailAddress: "INVOICES@BLAKLADER.COM",
+        },
+        eoriNo: "5560696618",
+      },
+      buyer: {
+        name: "KNEGARN AB",
+        streets: ["DALKARBYVÄGEN 2"],
+        city: "MARIEHAMN",
+        postalCode: "22100",
+        countryCode: "AX",
+        contacts: {
+          name: "POSTNORD SVERIGE ",
+          phoneNo: "010-4363330",
+        },
+      },
+
+      // shipTo: {
+      //   partyIdentification: {
+      //     partyId: "1234567890",
+      //     partyIdType: "160",
+      //   },
+      //   name: "Nils Andersson",
+      //   streets: ["Engelbrekts väg"],
+      //   city: "Sollentuna",
+      //   postalCode: "19162",
+      //   countryCode: "SE",
+      //   contacts: {
+      //     name: "Nils Andersson",
+      //     phoneNo: "+4685586363",
+      //     emailAddress: "me@postnord.com",
+      //     smsNo: "+467052555",
+      //   },
+      // },
+      invoice: {
+        invoiceNo: "7680396",
+        shippingDate: "2020-02-05",
+        reasonForExportation: "1000",
+        termsOfSale: "DDP",
+      },
+      ids: [
+        {
+          id: "23784726535SE",
+          idType: "ITEMID",
+        },
+      ],
+      // detailedDescription: [
+      //   {
+      //     quantity: 1,
+      //     hsTariffNumber: "33040000",
+      //     hsTariffNumberCountryCode: "SE",
+      //     content: "Cotton shirt",
+      //     countryOfOrigin: "SE",
+      //     netWeight: {
+      //       value: 5,
+      //       unit: "KGM",
+      //     },
+      //     grossWeight: {
+      //       value: 5,
+      //       unit: "KGM",
+      //     },
+      //     itemValue: {
+      //       amount: 20,
+      //       currency: "SEK",
+      //     },
+      //   },
+      // ],
+      totalNetWeight: {
+        value: 5,
+        unit: "KGM",
+      },
+      totalGrossWeight: {
+        value: 5,
+        unit: "KGM",
+      },
+      totalNumberOfPackages: {
+        value: 1,
+      },
+
+      invoiceTotal: {
+        amount: 20,
+        currency: "SEK",
+      },
+    },
+  },
+];
